@@ -88,7 +88,7 @@ section > section > div {
         -webkit-line-clamp: 2;
         overflow: hidden;
         white-space: normal;
-        overflow-wrap: anywhere;
+        // overflow-wrap: anywhere;
 
         @media (max-width: toEm($huge-mobile-adaptive)), (orientation: landscape) and (max-height: 500px) {
           -webkit-line-clamp: 4;

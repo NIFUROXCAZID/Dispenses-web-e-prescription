@@ -262,7 +262,13 @@
 
   function createDataRow(record) {
     const row = document.createElement('tr');
-    const values = [record.region, record.inn, record.tradeName, record.prescriptions, record.packages, record.dailyDoses];
+    const values = [
+      record.region,
+      record.inn,
+      record.tradeName,
+      record.prescriptions,
+      record.packages,
+    ];
     for (const [index, value] of values.entries()) {
       const cell = document.createElement('td');
       if (index < 3) {
@@ -293,7 +299,6 @@
     const values = [
       ['Усього погашено рецептів', totals.prescriptions],
       ['Усього відпущено упаковок', totals.packages],
-      ['Усього відпущено добових доз', totals.dailyDoses],
     ];
 
     for (const [label, value] of values) {
@@ -366,25 +371,24 @@
       if (typeof ExcelJS === 'undefined') throw new Error('Бібліотека Excel ще не завантажилася. Онови сторінку та повтори.');
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Погашені рецепти');
-      const widths = [24, 48, 65, 22, 23, 27];
+      const widths = [24, 48, 65, 22, 23];
       sheet.columns = widths.map((width) => ({ width }));
       // Перший рядок: препарат, область і сортування.
       const infoRow = sheet.addRow([
         `Препарат: ${report.details.drug}`, null,
-        `Область: ${report.details.region}`, null,
-        'Посортовано за: областями за алфавітом', null,
+        `Область: ${report.details.region}`,
+        'Посортовано за: Областями', null,
       ]);
 
       sheet.mergeCells(infoRow.number, 1, infoRow.number, 2);
-      sheet.mergeCells(infoRow.number, 3, infoRow.number, 4);
-      sheet.mergeCells(infoRow.number, 5, infoRow.number, 6);
+      sheet.mergeCells(infoRow.number, 4, infoRow.number, 5);
       infoRow.height = 26;
 
       // Другий рядок: період.
       const periodText = `Період погашення: ${report.details.period}`;
       const periodRow = sheet.addRow([periodText]);
 
-      sheet.mergeCells(periodRow.number, 1, periodRow.number, 6);
+      sheet.mergeCells(periodRow.number, 1, periodRow.number, 5);
       periodRow.height = Math.max(
         22,
         Math.ceil(periodText.length / 180) * 15 + 6,
@@ -392,11 +396,11 @@
 
       // Третій рядок: підсумки.
       if (report.totals) {
-        const { prescriptions, packages, dailyDoses } = report.totals;
+        const { prescriptions, packages } = report.totals;
 
         const totalRow = sheet.addRow([
           'Усього за вибраний період', null, null,
-          prescriptions, packages, dailyDoses,
+          prescriptions, packages,
         ]);
 
         sheet.mergeCells(totalRow.number, 1, totalRow.number, 3);
@@ -404,8 +408,11 @@
         totalRow.height = 22;
       }
       const header = sheet.addRow([
-        'Область', 'МНН, лікарська форма', 'Торгова назва повна',
-        'Погашено рецептів', 'Відпущено упаковок', 'Відпущено добових доз',
+        'Область',
+        'МНН, лікарська форма',
+        'Торгова назва повна',
+        'Погашено рецептів',
+        'Відпущено упаковок',
       ]);
       header.font = { bold: true };
       header.height = 26;
@@ -415,12 +422,18 @@
       sheet.views = [{ state: 'frozen', ySplit: header.number }];
       for (const record of report.rows) {
         const texts = [record.region ?? '—', record.inn ?? '—', record.tradeName ?? '—'];
-        const row = sheet.addRow([...texts, record.prescriptions, record.packages, record.dailyDoses]);
+        const row = sheet.addRow([
+          ...texts,
+          record.prescriptions,
+          record.packages,
+        ]);
         const lines = Math.max(...texts.map((text, index) => Math.ceil(text.length / (widths[index] * 0.85))));
         row.height = Math.max(24, lines * 15 + 8);
       }
-      sheet.autoFilter = { from: { row: header.number, column: 1 }, to: { row: header.number + report.rows.length, column: 6 } };
-      for (const index of [4, 5, 6]) sheet.getColumn(index).numFmt = '#,##0.##########';
+      sheet.autoFilter = { from: { row: header.number, column: 1 }, to: { row: header.number + report.rows.length, column: 5 } };
+      for (const index of [4, 5]) {
+        sheet.getColumn(index).numFmt = '#,##0.##########';
+      }
       sheet.eachRow((row) => {
         row.alignment = { vertical: 'middle', wrapText: true };
       });
