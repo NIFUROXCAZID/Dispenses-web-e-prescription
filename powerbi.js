@@ -107,7 +107,10 @@ function createTableCommand({ drug, region, months }) {
         { ...dimensions[0], Name: 'dim_divisions.area' },
         { ...count, Name: 'DAX.Погашено рецептів' },
         { ...measure('d1', 'Відпущено упаковок (дин)'), Name: 'DAX.Відпущено упаковок (дин)' },
-        { ...measure('d1', 'Відпущено добових доз (дин)'), Name: 'DAX.Відпущено добових доз (дин)' },
+        {
+          ...measure('d1', 'Розраховане відшкодування (дин)'),
+          Name: 'DAX.Розраховане відшкодування (дин)',
+        },
         { ...dimensions[1], Name: 'dim_medications.full_inn_name' },
         { ...dimensions[2], Name: 'dim_medications.Торгова назва повна' },
       ],
@@ -116,7 +119,7 @@ function createTableCommand({ drug, region, months }) {
         inFilter(column('п', 'Параметр Поля'), [
           "'DAX'[Погашено рецептів (дин)]",
           "'DAX'[Відпущено упаковок (дин)]",
-          "'DAX'[Відпущено добових доз (дин)]",
+          "'DAX'[Розраховане відшкодування (дин)]",
         ]),
         ...(months.length ? [monthFilter(months)] : []),
         inFilter(column('п1', 'Параметр Поля'), [
@@ -235,41 +238,56 @@ async function requestAllRows(command, visualId) {
 }
 
 function numeric(value) {
-  if (value === null) return null;
-  if (!Number.isFinite(value)) throw new Error('Power BI повернув некоректний числовий показник.');
-  return value;
+  if (value == null) return null;
+
+  const number = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim() !== ''
+      ? Number(value)
+      : NaN;
+
+  if (!Number.isFinite(number)) {
+    throw new Error('Power BI повернув некоректний числовий показник.');
+  }
+
+  return number;
 }
 
 async function getDispenseReport(filters) {
-  const result = await requestAllRows(createTableCommand(filters), TABLE_VISUAL);
-  const rows = result.rows.map(([region, prescriptions, packages, dailyDoses, inn, tradeName]) => ({
-    region,
-    inn,
-    tradeName,
-    prescriptions: numeric(prescriptions),
-    packages: numeric(packages),
-    dailyDoses: numeric(dailyDoses),
-  }));
+  const result = await requestAllRows(
+    createTableCommand(filters),
+    TABLE_VISUAL,
+  );
+
+  const rows = result.rows
+    .map(([region, prescriptions, packages, reimbursement, inn, tradeName]) => ({
+      region,
+      inn,
+      tradeName,
+      prescriptions: numeric(prescriptions),
+      packages: numeric(packages),
+      reimbursement: numeric(reimbursement),
+    }))
+    .filter((row) => row.reimbursement !== 0);
+
   const collator = new Intl.Collator('uk');
+
   rows.sort((a, b) =>
     collator.compare(a.region ?? '', b.region ?? '')
     || collator.compare(a.inn ?? '', b.inn ?? '')
-    || collator.compare(a.tradeName ?? '', b.tradeName ?? ''));
+    || collator.compare(a.tradeName ?? '', b.tradeName ?? '')
+  );
 
-  const { dataset, descriptor } = result.firstPage;
-  const grouping = descriptor.Expressions?.Primary?.Groupings?.[0];
-  let totals = null;
-  if (grouping?.SubtotalMember) {
-    const total = decodeMember(dataset, grouping.SubtotalMember)[0];
-    if (total) {
-      const values = descriptor.Select.map((field) => total[field.Subtotal?.[0]] ?? null);
-      totals = {
-        prescriptions: numeric(values[1]),
-        packages: numeric(values[2]),
-        dailyDoses: numeric(values[3]),
-      };
-    }
-  }
+  // Підсумки лише за рядками, що залишилися після фільтрації.
+  const totals = rows.reduce(
+    (sum, row) => {
+      sum.prescriptions += row.prescriptions ?? 0;
+      sum.packages += row.packages ?? 0;
+      return sum;
+    },
+    { prescriptions: 0, packages: 0 },
+  );
+
   return { rows, totals };
 }
 

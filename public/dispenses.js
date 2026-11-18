@@ -20,6 +20,8 @@
   const periodFeedback = document.querySelector('#period-feedback');
   const retryPeriods = document.querySelector('#retry-periods');
   const allPeriodsInput = document.querySelector('#all-periods');
+  const tradeSummarySection = document.querySelector('#trade-summary-section');
+  const tradeSummaryBody = document.querySelector('#trade-summary-rows');
 
   const monthNames = [
     'січень', 'лютий', 'березень', 'квітень', 'травень', 'червень',
@@ -308,6 +310,68 @@
     }
   }
 
+  function summarizeTradeNames(rows) {
+    const groups = new Map();
+
+    const collator = new Intl.Collator('uk', {
+      numeric: true,
+      sensitivity: 'base',
+    });
+
+    for (const record of rows) {
+      const key = record.tradeName;
+      const inn = record.inn ?? '';
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          tradeName: key,
+          inn,
+          prescriptions: 0,
+          packages: 0,
+        });
+      }
+
+      const group = groups.get(key);
+
+      // Стабільний ключ сортування, якщо одна торгова назва
+      // зустрілась із різними варіантами запису МНН.
+      if (collator.compare(inn, group.inn) < 0) {
+        group.inn = inn;
+      }
+
+      group.prescriptions += record.prescriptions ?? 0;
+      group.packages += record.packages ?? 0;
+    }
+
+    return [...groups.values()].sort((a, b) =>
+      collator.compare(a.inn, b.inn)
+      || collator.compare(a.tradeName ?? '', b.tradeName ?? '')
+    );
+  }
+
+  function renderTradeSummary(rows) {
+    const tableRows = rows.map((record) => {
+      const row = document.createElement('tr');
+
+      const values = [
+        record.tradeName ?? '—',
+        formatNumber(record.prescriptions),
+        formatNumber(record.packages),
+      ];
+
+      for (const value of values) {
+        const cell = document.createElement('td');
+        cell.textContent = value;
+        row.append(cell);
+      }
+
+      return row;
+    });
+
+    tradeSummaryBody.replaceChildren(...tableRows);
+    tradeSummarySection.hidden = rows.length === 0;
+  }
+
   loadButton.addEventListener('click', async () => {
     const months = [...selectedMonths].sort();
     if (months.length === 0) {
@@ -330,6 +394,7 @@
       region: regionSelect.selectedOptions[0].textContent.trim(),
       period: describePeriods(months),
       months,
+      allRegions: regionSelect.value === 'all',
     };
     reportLoading = true;
     updateButtons();
@@ -342,8 +407,21 @@
       const rows = report.rows.map(createDataRow);
       tableBody.replaceChildren(...rows);
       renderTotals(report.totals);
-      loadedReport = { rows: report.rows, totals: report.totals, details };
+
+      const summaryRows = details.allRegions
+        ? summarizeTradeNames(report.rows)
+        : [];
+
+      renderTradeSummary(summaryRows);
+
+      loadedReport = {
+        rows: report.rows,
+        totals: report.totals,
+        summaryRows,
+        details,
+      };
       results.hidden = false;
+      document.querySelector('#region-details-section').hidden = false;
       status.textContent = 'Знайдено рядків — ' + rows.length;
     } catch (error) {
       status.textContent = 'Не вдалося завантажити статистику. ' + error.message;
@@ -362,6 +440,97 @@
     row.height = Math.max(24, lines * 15 + 8);
   }
 
+  function addTradeSummarySheet(workbook, report) {
+    const sheet = workbook.addWorksheet('За торговими назвами');
+
+    sheet.columns = [
+      { width: 100 },
+      { width: 30 },
+      { width: 30 },
+    ];
+
+    const infoRow = sheet.addRow([
+      `Препарат: ${report.details.drug}`,
+      `Область: ${report.details.region}\nПосортовано за: МНН і торговою назвою`,
+    ]);
+
+    sheet.mergeCells(infoRow.number, 2, infoRow.number, 3);
+    infoRow.height = 36;
+
+    const periodText = `Період погашення: ${report.details.period}`;
+    const periodRow = sheet.addRow([periodText]);
+
+    sheet.mergeCells(periodRow.number, 1, periodRow.number, 3);
+    periodRow.height = Math.max(
+      22,
+      Math.ceil(periodText.length / 130) * 15 + 6,
+    );
+
+    const totals = report.summaryRows.reduce(
+      (sum, row) => {
+        sum.prescriptions += row.prescriptions;
+        sum.packages += row.packages;
+        return sum;
+      },
+      { prescriptions: 0, packages: 0 },
+    );
+
+    const totalRow = sheet.addRow([
+      'Усього за вибраний період',
+      totals.prescriptions,
+      totals.packages,
+    ]);
+
+    totalRow.font = { bold: true };
+    totalRow.height = 22;
+
+    const header = sheet.addRow([
+      'Торгова назва повна',
+      'Погашено рецептів',
+      'Відпущено упаковок',
+    ]);
+
+    header.font = { bold: true };
+    header.height = 30;
+
+    header.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE1EBFB' },
+      };
+    });
+
+    for (const record of report.summaryRows) {
+      const name = record.tradeName ?? '—';
+
+      const row = sheet.addRow([
+        name,
+        record.prescriptions,
+        record.packages,
+      ]);
+
+      row.height = Math.max(24, Math.ceil(name.length / 85) * 15 + 8);
+    }
+
+    for (const index of [2, 3]) {
+      sheet.getColumn(index).numFmt = '#,##0';
+    }
+
+    sheet.eachRow((row) => {
+      row.alignment = { vertical: 'middle', wrapText: true };
+    });
+
+    sheet.views = [{ state: 'frozen', ySplit: header.number }];
+
+    sheet.autoFilter = {
+      from: { row: header.number, column: 1 },
+      to: {
+        row: header.number + report.summaryRows.length,
+        column: 3,
+      },
+    };
+  }
   downloadButton.addEventListener('click', async () => {
     if (!loadedReport?.rows.length) return;
     const report = loadedReport;
@@ -370,7 +539,12 @@
     try {
       if (typeof ExcelJS === 'undefined') throw new Error('Бібліотека Excel ще не завантажилася. Онови сторінку та повтори.');
       const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet('Погашені рецепти');
+
+      if (report.details.allRegions && report.summaryRows.length > 0) {
+        addTradeSummarySheet(workbook, report);
+      }
+
+      const sheet = workbook.addWorksheet('За областями');
       const widths = [24, 48, 65, 22, 23];
       sheet.columns = widths.map((width) => ({ width }));
       // Перший рядок: препарат, область і сортування.
@@ -432,7 +606,7 @@
       }
       sheet.autoFilter = { from: { row: header.number, column: 1 }, to: { row: header.number + report.rows.length, column: 5 } };
       for (const index of [4, 5]) {
-        sheet.getColumn(index).numFmt = '#,##0.##########';
+        sheet.getColumn(index).numFmt = '#,##0';
       }
       sheet.eachRow((row) => {
         row.alignment = { vertical: 'middle', wrapText: true };

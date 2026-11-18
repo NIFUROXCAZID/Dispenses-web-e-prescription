@@ -108,42 +108,60 @@
                 <div class="icon_IcoMoon"></div>
               </button>
             </div>
+            <div id="trade-summary-section" hidden>
+              <h4>Підсумки за торговими назвами</h4>
+              <figure>
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Торгова назва повна</th>
+                      <th scope="col">Погашено рецептів</th>
+                      <th scope="col">Відпущено упаковок</th>
+                    </tr>
+                  </thead>
+                  <tbody id="trade-summary-rows"></tbody>
+                </table>
+              </figure>
+            </div>
             <p class="query-info" id="status" role="status"></p>
-            <div class="query-info" id="dispense-totals" hidden></div>
-            <figure id="dispenses-results">
-              <table>
-                <thead>
-                  <tr id="pharmacy-heading">
-                    <th scope="col">
-                      <button type="button" class="table-text-button" aria-expanded="false">
-                        <span class="table-text">Область</span>
-                      </button>
-                    </th>
-                    <th scope="col">
-                      <button type="button" class="table-text-button" aria-expanded="false">
-                        <span class="table-text">МНН, лікарська форма</span>
-                      </button>
-                    </th>
-                    <th scope="col">
-                      <button type="button" class="table-text-button" aria-expanded="false">
-                        <span class="table-text">Торгова назва повна</span>
-                      </button>
-                    </th>
-                    <th scope="col">
-                      <button type="button" class="table-text-button" aria-expanded="false">
-                        <span class="table-text">Погашено рецептів</span>
-                      </button>
-                    </th>
-                    <th scope="col">
-                      <button type="button" class="table-text-button" aria-expanded="false">
-                        <span class="table-text">Відпущено упаковок</span>
-                      </button>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody id="dispense-rows"></tbody>
-              </table>
-            </figure>
+            <div id="region-details-section" hidden>
+              <h4>Деталізація за областями</h4>
+              <div class="query-info" id="dispense-totals" hidden></div>
+              <figure id="dispenses-results" style="margin-bottom: 0">
+                <table>
+                  <thead>
+                    <tr id="pharmacy-heading">
+                      <th scope="col">
+                        <button type="button" class="table-text-button" aria-expanded="false">
+                          <span class="table-text">Область</span>
+                        </button>
+                      </th>
+                      <th scope="col">
+                        <button type="button" class="table-text-button" aria-expanded="false">
+                          <span class="table-text">МНН, лікарська форма</span>
+                        </button>
+                      </th>
+                      <th scope="col">
+                        <button type="button" class="table-text-button" aria-expanded="false">
+                          <span class="table-text">Торгова назва повна</span>
+                        </button>
+                      </th>
+                      <th scope="col">
+                        <button type="button" class="table-text-button" aria-expanded="false">
+                          <span class="table-text">Погашено рецептів</span>
+                        </button>
+                      </th>
+                      <th scope="col">
+                        <button type="button" class="table-text-button" aria-expanded="false">
+                          <span class="table-text">Відпущено упаковок</span>
+                        </button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="dispense-rows"></tbody>
+                </table>
+              </figure>
+            </div>
           </section>
         </div>
       </main>
