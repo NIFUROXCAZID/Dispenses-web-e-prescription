@@ -1,0 +1,161 @@
+@use "./abstracts/index" as *;
+
+// @media (max-width: toEm($huge-mobile-adaptive)) {
+//       flex: 0 1 100%;
+// }
+
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  column-gap: toRem(16);
+  row-gap: toRem(8);
+  &__wrap {
+    @extend %default-text;
+    & label {
+      @extend %default-text;
+      font-weight: 500;
+      font-size: toRem(16);
+      color: var(--main-text);
+      margin-bottom: toRem(4);
+      // @media (max-width: toEm(420)) {
+      //   font-size: toRem(13);
+      // }
+    }
+    & select,
+    & input {
+      box-sizing: border-box;
+      height: toRem(31);
+    }
+    & select {
+      @extend %default-font;
+      // @include adaptiveValue("font-size", 14, 12);
+      // @include adaptiveValue("line-height", 16, 14);
+      font-size: toRem(14);
+      line-height: toRem(16);
+      font-weight: 400;
+      padding: toRem(3);
+      display: block;
+      border-radius: $general-border-radius;
+      color: var(--main-text);
+      background-color: var(--table-bg-2);
+      border: toRem(2) solid var(--main-text);
+      width: 100%;
+      max-width: toRem(300);
+      &:focus {
+        outline: none !important;
+        box-shadow: inset 0 0 toRem(10) var(--button-color--3) !important;
+      }
+    }
+    & input {
+      @extend %default-font;
+      // @include adaptiveValue("font-size", 14, 12);
+      // @include adaptiveValue("line-height", 16, 14);
+      font-size: toRem(14);
+      line-height: toRem(16);
+      font-weight: 400;
+      color: var(--main-text);
+      width: 100%;
+      padding: toRem(3);
+      padding-left: toRem(8);
+      display: block;
+      border-radius: $general-border-radius;
+      background-color: var(--table-bg-2);
+      border: toRem(2) solid var(--main-text);
+      &::placeholder {
+        color: var(--placeholder-text);
+      }
+      &:focus {
+        outline: none !important;
+        box-shadow: inset 0 0 toRem(10) var(--button-color--3) !important;
+      }
+    }
+    & textarea {
+    }
+    &--flex {
+      display: flex;
+      // flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      column-gap: toRem(16);
+      row-gap: toRem(8);
+    }
+    &--flex-checkbox {
+      display: flex;
+      // flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      column-gap: toRem(16);
+      row-gap: toRem(8);
+    }
+  }
+  &__filter-wrap {
+    &--checkbox {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      column-gap: toRem(8);
+      & label {
+        margin: 0;
+      }
+      & input {
+        width: toRem(30);
+        height: toRem(30);
+      }
+    }
+  }
+
+  #city-field[hidden],
+  #region-field[hidden] {
+    display: none;
+  }
+}
+
+.settings-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  column-gap: toRem(16);
+  row-gap: toRem(8);
+  margin-top: toRem(8);
+  margin-bottom: toRem(8);
+  @media (max-width: toEm($huge-mobile-adaptive)) {
+    column-gap: toRem(8);
+  }
+}
+.query-info {
+  margin-bottom: toRem(4);
+  // margin-top: 4px;
+  @extend %default-font;
+  font-weight: 600;
+  font-size: toRem(16);
+  line-height: toRem(16);
+  color: var(--main-text);
+  & p {
+    color: var(--main-text);
+  }
+  // text-align: center;
+}
+
+.main-title {
+  @media (max-width: toEm($huge-mobile-adaptive)) {
+    font-size: toRem(18);
+    line-height: toRem(18);
+  }
+  @media (max-width: toEm(434)) {
+    font-size: toRem(15);
+    line-height: toRem(15);
+  }
+  @media (max-width: toEm(360)) {
+    font-size: toRem(13);
+    line-height: toRem(13);
+  }
+}
+// .med-select {
+//   @media (max-width: toEm(380)) {
+//     width: auto;
+//     max-width: toRem(220) !important;
+//   }
+// }

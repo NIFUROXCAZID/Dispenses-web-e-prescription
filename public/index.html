@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Деталізація даних про погашення e-Рецептів</title>
+    <meta name="description" content="Деталізація даних про погашення e-Рецептів." />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="Деталізація даних про погашення e-Рецептів" />
+    <meta property="og:description" content="Деталізація даних про погашення e-Рецептів." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/assets/img/logos/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js" defer></script>
+    <script src="/dispenses.js" defer></script>
+  </head>
+  <body>
+    <div class="wrapper dispenses-page">
+      <main class="main">
+        <div class="main__container">
+          <section>
+            <h2 class="main-title">Деталізація даних про погашення e-Рецептів</h2>
+            <div class="settings">
+              <div class="settings__wrap">
+                <label for="drug">Препарат (МНН)</label>
+                <select id="drug" class="med-select">
+                  <option value="lercanidipine" selected>Лерканідипін</option>
+                  <option value="eplerenone">Еплеренон</option>
+                  <option value="indapamide-perindopril">Індапамід + периндоприл</option>
+                  <option value="amlodipine-indapamide-perindopril">Амлодипін + індапамід + периндоприл</option>
+                  <option value="ezetimibe-rosuvastatin">Езетиміб + розувастатин</option>
+                  <option value="aspirin-rosuvastatin">Ацетилсаліцилова кислота + розувастатин</option>
+                  <option value="custom">Інша група ліків…</option>
+                </select>
+              </div>
+              <div class="settings__wrap" id="custom-drug-field" hidden>
+                <label for="custom-drug">МНН як у звіті НСЗУ</label>
+                <input id="custom-drug" type="text" list="drug-suggestions" placeholder="Введи назву МНН" />
+                <datalist id="drug-suggestions"></datalist>
+              </div>
+              <div class="settings__wrap">
+                <label for="region">Область</label>
+                <select id="region">
+                  <option value="all" selected>Усі області</option>
+                  <option value="vinnytska">Вінницька область</option>
+                  <option value="volynska">Волинська область</option>
+                  <option value="dnipropetrovska">Дніпропетровська область</option>
+                  <option value="donetska">Донецька область</option>
+                  <option value="zhytomyrska">Житомирська область</option>
+                  <option value="zakarpatska">Закарпатська область</option>
+                  <option value="zaporizka">Запорізька область</option>
+                  <option value="ivano-frankivska">Івано-Франківська область</option>
+                  <option value="kyivska">Київська область</option>
+                  <option value="kirovohradska">Кіровоградська область</option>
+                  <option value="luhanska">Луганська область</option>
+                  <option value="lvivska">Львівська область</option>
+                  <option value="kyiv">м. Київ</option>
+                  <option value="mykolaivska">Миколаївська область</option>
+                  <option value="odeska">Одеська область</option>
+                  <option value="poltavska">Полтавська область</option>
+                  <option value="rivnenska">Рівненська область</option>
+                  <option value="sumska">Сумська область</option>
+                  <option value="ternopilska">Тернопільська область</option>
+                  <option value="kharkivska">Харківська область</option>
+                  <option value="khersonska">Херсонська область</option>
+                  <option value="khmelnytska">Хмельницька область</option>
+                  <option value="cherkaska">Черкаська область</option>
+                  <option value="chernivetska">Чернівецька область</option>
+                  <option value="chernihivska">Чернігівська область</option>
+                </select>
+              </div>
+              <div class="settings__wrap period-picker" id="period-picker">
+                <span class="period-picker__label" id="period-label">Період погашення</span>
+                <button
+                  class="period-picker__toggle"
+                  id="period-toggle"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="period-panel"
+                  aria-labelledby="period-label period-value"
+                >
+                  <span class="period-picker__value" id="period-value">Завантаження періодів…</span>
+                  <span class="period-picker__arrow" aria-hidden="true"></span>
+                </button>
+                <div class="period-picker__panel" id="period-panel" hidden>
+                  <label class="period-picker__check period-picker__all">
+                    <input type="checkbox" id="all-periods" disabled />
+                    <span>Усі періоди</span>
+                  </label>
+                  <div id="period-tree"></div>
+                  <p class="period-picker__feedback" id="period-feedback" role="status">Завантаження…</p>
+                  <button class="period-picker__retry" id="retry-periods" type="button" hidden>
+                    Повторити завантаження
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="settings-btns">
+              <button class="defaultButton" id="load-dispenses" type="button" disabled>
+                <span>Показати статистику</span>
+              </button>
+              <button class="defaultButton" id="download-dispenses" type="button" disabled>
+                <span>Скачати таблицю</span>
+              </button>
+              <button class="defaultButton defaultButton--theme-btn" id="theme-toggle" type="button">
+                <div class="icon_sun"></div>
+                <span>/</span>
+                <div class="icon_IcoMoon"></div>
+              </button>
+            </div>
+            <p class="query-info" id="status" role="status"></p>
+            <div class="query-info" id="dispense-totals" hidden></div>
+            <figure id="dispenses-results">
+              <table>
+                <thead>
+                  <tr id="pharmacy-heading">
+                    <th scope="col">
+                      <button type="button" class="table-text-button" aria-expanded="false">
+                        <span class="table-text">Область</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button type="button" class="table-text-button" aria-expanded="false">
+                        <span class="table-text">МНН, лікарська форма</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button type="button" class="table-text-button" aria-expanded="false">
+                        <span class="table-text">Торгова назва повна</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button type="button" class="table-text-button" aria-expanded="false">
+                        <span class="table-text">Погашено рецептів</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button type="button" class="table-text-button" aria-expanded="false">
+                        <span class="table-text">Відпущено упаковок</span>
+                      </button>
+                    </th>
+                    <th scope="col">
+                      <button type="button" class="table-text-button" aria-expanded="false">
+                        <span class="table-text">Відпущено добових доз</span>
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="dispense-rows"></tbody>
+              </table>
+            </figure>
+          </section>
+        </div>
+      </main>
+      <footer class="footer">
+        <div class="footer__container">
+          <p class="footer__copyright">© Copyright Деталізація даних про погашення e-Рецептів. Всі права збережено.</p>
+        </div>
+      </footer>
+      <div id="go-top-elem" class="go-top shown">
+        <button class="go-top__button" aria-label="scroll up">
+          <div class="go-upper-floor__img arrow-go-upper-floor">
+            <div class="arrow-go-upper-floor__stick"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <script src="./script.js"></script>
+  </body>
+</html>
