@@ -450,7 +450,7 @@
     ];
 
     const infoRow = sheet.addRow([
-      `Препарат: ${report.details.drug}`,
+      `МНН: ${report.details.drug}`,
       `Область: ${report.details.region}\nПосортовано за: МНН і торговою назвою`,
     ]);
 
@@ -547,9 +547,9 @@
       const sheet = workbook.addWorksheet('За областями');
       const widths = [24, 48, 65, 22, 23];
       sheet.columns = widths.map((width) => ({ width }));
-      // Перший рядок: препарат, область і сортування.
+      // Перший рядок: МНН, область і сортування.
       const infoRow = sheet.addRow([
-        `Препарат: ${report.details.drug}`, null,
+        `МНН: ${report.details.drug}`, null,
         `Область: ${report.details.region}`,
         'Посортовано за: Областями', null,
       ]);
